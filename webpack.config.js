@@ -5,8 +5,13 @@ const { argv } = require('yargs');
 const autoprefixer = require('autoprefixer');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
+const proxy = require('proxy-middleware');
+const url = require('url');
 // const hotMiddlewareScript = require('webpack-hot-middleware/client?noInfo=true&timeout=20000&reload=true');
 
+// @TODO: make all these a importable object
+const npmPackageConfig = require('./package.json');
+const hoodieConfig = npmPackageConfig.hoodie;
 // App Paths
 const PATHS = {
   app: path.join(__dirname, 'src'),
@@ -23,8 +28,7 @@ const IS_WATCHING = !!argv.watch;
 if (process.env.NODE_ENV === undefined) {
   process.env.NODE_ENV = IS_PRODUCTION ? 'production' : 'development';
 }
-
-const DEV_URL = 'http://localhost:8080';
+const DEV_URL = `http://${hoodieConfig.address}:${hoodieConfig.port}`; // 'http://localhost:8080';
 const PROXY_URL = 'http://localhost:3030';
 
 // Standard build artifacts for all envs
@@ -156,33 +160,41 @@ let webpackConfig = {
 }
 
 if (IS_WATCHING) {
+
+  const proxyOptions = url.parse(`${DEV_URL}/hoodie`);
+  proxyOptions.route = '/hoodie';
+
   const watchConfig = {
-    entry: {
-      app: [
-        `webpack-hot-middleware/client?reload=true`,
-        // `webpack-hot-middleware/client?reload=true&noInfo=true&path=${PROXY_URL}__webpack_hmr`,
-        PATHS.app,
-      ],
-    },
-    output: {
-      pathinfo: true,
-      publicPath: 'public',// PROXY_URL + '/',
-    },
-    devtool: '#cheap-module-source-map',
-    stats: false,
+    // entry: {
+    //   app: [
+    //     `webpack-hot-middleware/client?reload=true`,
+    //     // `webpack-hot-middleware/client?reload=true&noInfo=true&path=${DEV_URL}__webpack_hmr`,
+    //     PATHS.app,
+    //   ],
+    // },
+    // output: {
+    //   pathinfo: true,
+    //   publicPath: 'public',// PROXY_URL + '/',
+    // },
+    // devtool: '#cheap-module-source-map',
+    // stats: false,
     plugins: [
       new webpack.optimize.OccurrenceOrderPlugin(),
       new webpack.HotModuleReplacementPlugin(),
       new webpack.NoEmitOnErrorsPlugin(),
       new BrowserSyncPlugin({
-        open: true,
+        logPrefix: npmPackageConfig.name, // Name is command line log
+        open: false,                      // Open when launched
         target: DEV_URL,
         proxyUrl: PROXY_URL,
         port: 3030,
         watch: [path.join(__dirname, 'src/**/*')],
         delay: 500,
-        server: { baseDir: ['public'] }
-      }),
+        server: {
+          baseDir: ['public'],
+          middleware: [proxy(proxyOptions)], // Proxy /hoodie to DEV_URL
+        },
+      })
     ],
   };
   /*
