@@ -1,5 +1,8 @@
+$bg: #666;
+
 .app {
-  color: orange;
-  background-color: blue;
+  color: yellow;
+  background-color: $bg;
   display: flex;
+  padding: 20px;
 }

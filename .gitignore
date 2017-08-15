@@ -12,6 +12,7 @@ public/app.js
 public/style.js
 public/images
 public/**/*.map
+public/**/*.hot-update.*
 /build
 
 # misc

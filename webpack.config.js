@@ -1,9 +1,13 @@
 const webpack = require('webpack');
+const merge = require('webpack-merge');
+const path = require('path');
+const { argv } = require('yargs');
 const autoprefixer = require('autoprefixer');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
+// const hotMiddlewareScript = require('webpack-hot-middleware/client?noInfo=true&timeout=20000&reload=true');
 
-// Init common paths used by config
-const path = require('path');
+// App Paths
 const PATHS = {
   app: path.join(__dirname, 'src'),
   build: path.join(__dirname, 'public'),
@@ -12,9 +16,21 @@ const PATHS = {
     path.join(__dirname, 'src/components'),
   ],
 };
+// Env
+const SERVER_RENDER = process.env.SERVER_RENDER === 'true';
+const IS_PRODUCTION = !!((argv.env && argv.env.production) || argv.p);
+const IS_WATCHING = !!argv.watch;
+if (process.env.NODE_ENV === undefined) {
+  process.env.NODE_ENV = IS_PRODUCTION ? 'production' : 'development';
+}
+
+const DEV_URL = 'http://localhost:8080';
+const PROXY_URL = 'http://localhost:3030';
 
 // Standard build artifacts for all envs
-module.exports = {
+let webpackConfig = {
+  context: __dirname,
+  // @NOTE used below for hot realoading
   entry: {
     app: PATHS.app,
     // style: PATHS.stylesheets, // ??
@@ -44,14 +60,15 @@ module.exports = {
             loader: 'css-loader',
             options: {
               modules: true, // Enable  CSS Modules
-              importLoaders: 2, // Number of loaders applied before CSS loader
-              sourceMap: true,
-              localIdentName: '[name]-[local]--[hash:base64:5]',
+              importLoaders: 3, // Number of loaders applied before CSS loader
+              sourceMap: !IS_PRODUCTION,
+              minimize: IS_PRODUCTION,
+              localIdentName: '[name]-[local]_[hash:base64:5]',
             }
           }, {
             loader: 'postcss-loader',
             options: {
-              sourceMap: true,
+              sourceMap: !IS_PRODUCTION,
               plugins: () => [
                 autoprefixer({
                   browsers: [
@@ -62,39 +79,55 @@ module.exports = {
               ],
             }
           }, {
+              loader: 'resolve-url',
+              options: {
+                sourceMap: !IS_PRODUCTION,
+              }
+          }, {
             loader: 'sass-loader',
             options: {
-              sourceMap: true,
+              sourceMap: !IS_PRODUCTION,
             }
           }
         ],
         // use: ExtractTextPlugin.extract({
         //   fallback: 'style-loader',
-        //   loader: [
+        //   loaders: [
         //     {
         //       loader: 'css-loader',
         //       options: {
-        //         modules: true,
-        //         importLoaders: 3,
-        //         sourceMap: true,
-        //       },
+        //         modules: true, // Enable  CSS Modules
+        //         importLoaders: 3, // Number of loaders applied before CSS loader
+        //         sourceMap: !IS_PRODUCTION,
+        //         minimize: IS_PRODUCTION,
+        //         localIdentName: '[name]-[local]_[hash:base64:5]',
+        //       }
         //     }, {
         //       loader: 'postcss-loader',
         //       options: {
-        //         browsers: 'last 2 version',
-        //         sourceMap: true,
-        //       },
+        //         sourceMap: !IS_PRODUCTION,
+        //         plugins: () => [
+        //           autoprefixer({
+        //             browsers: [
+        //               'last 3 version',
+        //               'ie >= 10',
+        //             ],
+        //           }),
+        //         ],
+        //       }
+        //     }, {
+        //         loader: 'resolve-url',
+        //         options: {
+        //           sourceMap: !IS_PRODUCTION,
+        //         }
         //     }, {
         //       loader: 'sass-loader',
         //       options: {
-        //         // outputStyle: 'expanded',
-        //         sourceMap: true,
-        //         // sourceMapContents: true,
-        //       },
-        //     },
-        //   ],
+        //         sourceMap: !IS_PRODUCTION,
+        //       }
+        //     }
+        //   ]
         // }),
-        // }'style-loader', 'css-loader?modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]!postcss-loader'),
       },
       { // Transfer static files to build
         test: /\.(png)$/,
@@ -109,12 +142,63 @@ module.exports = {
       }
     ]
   },
-  // plugins: {
-  //   'autoprefixer': {},
-  // },
-  // postcss: [
-  //     autoprefixer({
-  //         browsers: ['last 2 versions'],
-  //     }),
-  // ],
+  resolve: {
+    modules: [
+      './src',
+      'node_modules',
+    ],
+    enforceExtension: false,
+  },
+  resolveLoader: {
+    moduleExtensions: ['-loader'],
+  },
+  plugins: [],
 }
+
+if (IS_WATCHING) {
+  const watchConfig = {
+    entry: {
+      app: [
+        `webpack-hot-middleware/client?reload=true`,
+        // `webpack-hot-middleware/client?reload=true&noInfo=true&path=${PROXY_URL}__webpack_hmr`,
+        PATHS.app,
+      ],
+    },
+    output: {
+      pathinfo: true,
+      publicPath: 'public',// PROXY_URL + '/',
+    },
+    devtool: '#cheap-module-source-map',
+    stats: false,
+    plugins: [
+      new webpack.optimize.OccurrenceOrderPlugin(),
+      new webpack.HotModuleReplacementPlugin(),
+      new webpack.NoEmitOnErrorsPlugin(),
+      new BrowserSyncPlugin({
+        open: true,
+        target: DEV_URL,
+        proxyUrl: PROXY_URL,
+        port: 3030,
+        watch: [path.join(__dirname, 'src/**/*')],
+        delay: 500,
+        server: { baseDir: ['public'] }
+      }),
+    ],
+  };
+  /*
+  const addHotMiddleware = (entry) => {
+    const results = {};
+
+    Object.keys(entry).forEach((name) => {
+      results[name] = Array.isArray(entry[name]) ? entry[name].slice(0) : [entry[name]];
+      results[name].unshift(`${__dirname}/../helpers/hmr-client.js`);
+    });
+
+    return results;
+  };
+  webpackConfig.entry = addHotMiddleware({ app: PATHS.app });
+  */
+  webpackConfig = merge(webpackConfig, watchConfig);
+}
+
+module.exports = webpackConfig;
