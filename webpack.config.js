@@ -30,15 +30,17 @@ if (process.env.NODE_ENV === undefined) {
 }
 const DEV_URL = `http://${hoodieConfig.address}:${hoodieConfig.port}`; // 'http://localhost:8080';
 const PROXY_URL = 'http://localhost:3030';
+// Entry
+const entryConfig = {
+  app: PATHS.app,
+  // style: PATHS.stylesheets, // ??
+};
 
 // Standard build artifacts for all envs
 let webpackConfig = {
   context: __dirname,
   // @NOTE used below for hot realoading
-  entry: {
-    app: PATHS.app,
-    // style: PATHS.stylesheets, // ??
-  },
+  entry: entryConfig,
   output: {
     path: PATHS.build,
     filename: '[name].js',
@@ -161,17 +163,31 @@ let webpackConfig = {
 
 if (IS_WATCHING) {
 
+  // Set proxy config object for Hoodie & BrowserSync
   const proxyOptions = url.parse(`${DEV_URL}/hoodie`);
   proxyOptions.route = '/hoodie';
+  // Set entry config for HMR
+  const hotMiddlewareEntry = (entry) => {
+    const results = {};
+    const hotMiddlewareScript = 'webpack-hot-middleware/client?timeout=20000&reload=true';
+
+    Object.keys(entry).forEach((name) => {
+      results[name] = Array.isArray(entry[name]) ? entry[name].slice(0) : [entry[name]];
+      results[name].unshift(hotMiddlewareScript);
+    });
+
+    return results;
+  };
 
   const watchConfig = {
-    // entry: {
-    //   app: [
-    //     `webpack-hot-middleware/client?reload=true`,
-    //     // `webpack-hot-middleware/client?reload=true&noInfo=true&path=${DEV_URL}__webpack_hmr`,
-    //     PATHS.app,
-    //   ],
-    // },
+    entry: {
+      app: [
+        'webpack/hot/dev-server',
+        // 'webpack-hot-middleware/client?timeout=20000&reload=true',
+        // `webpack-hot-middleware/client?reload=true&noInfo=true&path=${DEV_URL}__webpack_hmr`,
+        PATHS.app,
+      ], // hotMiddlewareEntry(entryConfig),
+    },
     // output: {
     //   pathinfo: true,
     //   publicPath: 'public',// PROXY_URL + '/',
