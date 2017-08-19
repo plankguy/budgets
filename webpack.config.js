@@ -37,7 +37,7 @@ const entryConfig = {
 };
 
 // Standard build artifacts for all envs
-let webpackConfig = {
+const baseConfig = {
   context: __dirname,
   // @NOTE used below for hot realoading
   entry: entryConfig,
@@ -159,58 +159,73 @@ let webpackConfig = {
     moduleExtensions: ['-loader'],
   },
   plugins: [],
-}
+};
 
-if (IS_WATCHING) {
+// if (IS_WATCHING) {
 
-  // Set proxy config object for Hoodie & BrowserSync
-  const proxyOptions = url.parse(`${DEV_URL}/hoodie`);
-  proxyOptions.route = '/hoodie';
-  // Set entry config for HMR
-  const hotMiddlewareEntry = (entry) => {
-    const results = {};
-    const hotMiddlewareScript = 'webpack-hot-middleware/client?timeout=20000&reload=true';
-
-    Object.keys(entry).forEach((name) => {
-      results[name] = Array.isArray(entry[name]) ? entry[name].slice(0) : [entry[name]];
-      results[name].unshift(hotMiddlewareScript);
-    });
-
-    return results;
+  // webpack-dev-server configuration
+  const devServerConfig = {
+    hot: true,
+    port: 3030,
+    contentBase: path.join(__dirname, 'public'), // 'public', //
+    compress: true,
+    proxy: {
+      '/hoodie/**': DEV_URL,
+    }
   };
+  // Set proxy config object for Hoodie & BrowserSync
+  // const proxyOptions = url.parse(`${DEV_URL}/hoodie`);
+  // proxyOptions.route = '/hoodie';
+  // Set entry config for HMR
+  // const hotMiddlewareEntry = (entry) => {
+  //   const results = {};
+  //   const hotMiddlewareScript = 'webpack-hot-middleware/client?timeout=20000&reload=true';
+  //
+  //   Object.keys(entry).forEach((name) => {
+  //     results[name] = Array.isArray(entry[name]) ? entry[name].slice(0) : [entry[name]];
+  //     results[name].unshift(hotMiddlewareScript);
+  //   });
+  //
+  //   return results;
+  // };
 
   const watchConfig = {
     entry: {
-      app: [
-        'webpack/hot/dev-server',
-        // 'webpack-hot-middleware/client?timeout=20000&reload=true',
-        // `webpack-hot-middleware/client?reload=true&noInfo=true&path=${DEV_URL}__webpack_hmr`,
-        PATHS.app,
-      ], // hotMiddlewareEntry(entryConfig),
+      // app: [
+      //   'webpack-dev-server/client?${DEV_URL}',
+      //   'webpack/hot/dev-server',
+      //   // 'webpack-hot-middleware/client?timeout=20000&reload=true',
+      //   // `webpack-hot-middleware/client?reload=true&noInfo=true&path=${DEV_URL}__webpack_hmr`,
+      //   PATHS.app,
+      // ], // hotMiddlewareEntry(entryConfig),
     },
     // output: {
     //   pathinfo: true,
     //   publicPath: 'public',// PROXY_URL + '/',
     // },
-    // devtool: '#cheap-module-source-map',
+    devtool: '#cheap-module-source-map',
     // stats: false,
+    devServer: devServerConfig,
     plugins: [
-      new webpack.optimize.OccurrenceOrderPlugin(),
+      // new webpack.optimize.OccurrenceOrderPlugin(),
       new webpack.HotModuleReplacementPlugin(),
       new webpack.NoEmitOnErrorsPlugin(),
-      new BrowserSyncPlugin({
-        logPrefix: npmPackageConfig.name, // Name is command line log
-        open: false,                      // Open when launched
-        target: DEV_URL,
-        proxyUrl: PROXY_URL,
-        port: 3030,
-        watch: [path.join(__dirname, 'src/**/*')],
-        delay: 500,
-        server: {
-          baseDir: ['public'],
-          middleware: [proxy(proxyOptions)], // Proxy /hoodie to DEV_URL
-        },
-      })
+      // new BrowserSyncPlugin({
+      //   logPrefix: npmPackageConfig.name, // Name is command line log
+      //   open: false,                      // Open when launched
+      //   // reload: false,
+      //   target: DEV_URL,
+      //   proxyUrl: PROXY_URL,
+      //   port: 3030,
+      //   // watch: [path.join(__dirname, 'src/**/*')],
+      //   delay: 500,
+      //   server: {
+      //     baseDir: ['public'],
+      //     middleware: [proxy(proxyOptions)], // Proxy /hoodie to DEV_URL
+      //   },
+      // }, {
+      //   reload: false,
+      // })
     ],
   };
   /*
@@ -226,7 +241,9 @@ if (IS_WATCHING) {
   };
   webpackConfig.entry = addHotMiddleware({ app: PATHS.app });
   */
-  webpackConfig = merge(webpackConfig, watchConfig);
-}
+  const webpackConfig = merge.smart(baseConfig, watchConfig);
+// }
+
+// console.log(webpackConfig);
 
 module.exports = webpackConfig;

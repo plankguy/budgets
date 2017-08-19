@@ -6,7 +6,9 @@ class App extends Component {
   render() {
     return (
       <div className={styles.app}>
-        Application
+        <div className={styles.inner}>
+          App
+        </div>
       </div>
     );
   }
