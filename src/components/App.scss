@@ -1,13 +1,14 @@
-$bg: #233;
+$colour: #233;
+@import '~normalize-scss/sass/normalize';
+
+:global {
+  @import '~normalize-scss/sass/normalize';
+  @import '../scss/base';
+}
 
 .app {
-  color: yellow;
-  background-color: $bg;
-  display: flex;
-  padding: 20px;
+  color: $colour;
 }
-.app .inner {
-  margin: 10px;
-  border: 2px solid #FCC;
-  padding: 5px;
+.total {
+  font-size: 48px;
 }
