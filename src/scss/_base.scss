@@ -1,6 +1,19 @@
+@import './globals/all';
+
+:global {
+  @import '~normalize-scss/sass/normalize';
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}
+
 body {
-  background: #FEE;
+  background: $color-bg;
   padding: 0;
   margin: 0;
   font-family: monospace;
+  color: $color-text;
 }

@@ -4,10 +4,12 @@
 
 // Create Hoodie client instance
 import Hoodie from '@hoodie/client';
+
 const hoodieInstance = new Hoodie({
   url: window.location.origin,
   PouchDB: require('pouchdb-browser').default,
 });
+
 const hoodie = () => hoodieInstance;
 
 // For browser console debugging purposes

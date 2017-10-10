@@ -1,0 +1,46 @@
+@import '../../scss/globals/all';
+
+$size: 90px;
+
+.transactionButton {
+  @include reset-button();
+  border-radius: 100%;
+  width: $size;
+  height: $size;
+  line-height: 0;
+  font-size: 80px;
+  color: $color-text--invert;
+  transition: background-color 0.3s ease-out, transform 0.1s ease-out;
+
+  &:active {
+    transform: scale(1.05, 1.05);
+  }
+}
+
+.outgoingButton {
+  composes: transactionButton;
+
+  background-color: $color-outgoing;
+
+  &:hover {
+    background-color: darken($color-outgoing, 7.5%);
+  }
+
+  &:active {
+    background-color: darken($color-outgoing, 10%);
+  }
+}
+
+.incomingButton {
+  composes: transactionButton;
+
+  background-color: $color-incoming;
+
+  &:hover {
+    background-color: darken($color-incoming, 7.5%);
+  }
+
+  &:active {
+    background-color: darken($color-incoming, 10%);
+  }
+}

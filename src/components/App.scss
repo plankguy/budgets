@@ -1,14 +1,19 @@
-$colour: #233;
-@import '~normalize-scss/sass/normalize';
+@import '../scss/globals/all';
+@import '../scss/base';
 
-:global {
-  @import '~normalize-scss/sass/normalize';
-  @import '../scss/base';
-}
+// :global {
+// }
 
 .app {
-  color: $colour;
+  color: $color-text;
 }
 .total {
   font-size: 48px;
+}
+.transactionTools {
+  display: flex;
+
+  .tool {
+    margin: 10px;
+  }
 }

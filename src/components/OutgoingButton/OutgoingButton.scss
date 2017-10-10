@@ -1,0 +1,24 @@
+@import '../../scss/globals/all';
+
+$size: 90px;
+
+.OutgoingButton {
+  @include reset-button();
+  border-radius: 100%;
+  width: $size;
+  height: $size;
+  line-height: 0;
+  font-size: 80px;
+  background-color: $color-outgoing;
+  color: $color-text--invert;
+  transition: background-color 0.3s ease-out, transform 0.1s ease-out;
+
+  &:hover {
+    background-color: darken($color-outgoing, 7.5%);
+  }
+
+  &:active {
+    background-color: darken($color-outgoing, 10%);
+    transform: scale(1.05, 1.05);
+  }
+}

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "hoodie",
-    "watch:old": "webpack --hide-modules --watch --config webpack.config.js | webpack-dev-server --color && wait",
+    "start:dev": "hoodie & NODE_ENV=development webpack-dev-server --watch --config webpack.config.js",
     "watch": "NODE_ENV=development webpack-dev-server --watch --config webpack.config.js",
     "build": "webpack --progress --config webpack.config.js",
     "build:production": "NODE_ENV=production webpack --progress -p --config webpack.config.js",
